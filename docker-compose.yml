@@ -132,8 +132,7 @@ services:
 
   caddy:
     #image: androw/caddy-security:latest
-    image: y0ug/caddy-mods
-    build: ./
+    image: ghcr.io/y0ug/caddy-mods:main
     restart: unless-stopped
     links:
       - vpn:qbittorrent
@@ -167,5 +166,5 @@ volumes:
 
 networks:
   default:
-    name: bridge-media
+    name: br-media 
     external: true
