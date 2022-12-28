@@ -1,0 +1,102 @@
+{
+	acme_dns cloudflare {$CF_API_TOKEN}
+
+	order authenticate before respond
+	order authorize before basicauth
+
+	security {
+		#oauth identity provider google {$GOOGLE_CLIENT_ID}.apps.googleusercontent.com {$GOOGLE_CLIENT_SECRET} 
+		oauth identity provider google {
+			realm google
+			driver google
+			client_id {$GOOGLE_CLIENT_ID}.apps.googleusercontent.com 
+			client_secret {$GOOGLE_CLIENT_SECRET} 
+			scopes openid email profile
+		}
+
+		authentication portal myportal {
+			enable identity provider google
+			crypto default token lifetime 86400 # 24h 
+			#crypto key sign-verify {$JWT_SHARED_KEY}
+			cookie domain *.{$BASE_DOMAIN}
+			ui {
+				links {
+					"My Identity" "/whoami" icon "las la-user"
+				}
+			}
+
+			transform user {
+				match realm google
+				match email hca443@gmail.com 
+				action add role authp/user
+				ui link "File" https://file.{$BASE_DOMAIN}/ icon "las la-file"
+				ui link "Torrent" https://torrent.{$BASE_DOMAIN}/ icon "las la-download"
+				ui link "Radarr (Movies)" https://radarr.{$BASE_DOMAIN}/ icon "las la-film"
+				ui link "Sonaar (TVs)" https://sonarr.{$BASE_DOMAIN}/ icon "las la-tv"
+				ui link "Bazarr (Subtitle)" https://bazaar.{$BASE_DOMAIN}/ icon "las la-txt"
+			}
+
+			transform user {
+				match realm google
+				match email hca443@gmail.com 
+				action add role authp/admin
+			}
+		}
+
+		authorization policy mypolicy {
+			set auth url https://auth.{$BASE_DOMAIN}/oauth2/google
+			allow roles authp/admin authp/user
+			validate bearer header
+			inject headers with claims
+		}
+	}
+}
+
+auth.{$BASE_DOMAIN} {
+	authenticate with myportal
+}
+
+torrent.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	reverse_proxy qbittorrent:8080
+}
+
+dl.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	file_server {
+		root /data_media/*
+		browse
+	}
+}
+file.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	reverse_proxy filebrowser:80
+}
+
+bazarr.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	reverse_proxy bazarr:6767
+}
+
+sonarr.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	reverse_proxy sonarr:8989
+}
+
+radarr.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	reverse_proxy radarr:7878
+}
+
+jackett.{$BASE_DOMAIN} {
+	authorize with mypolicy
+	reverse_proxy jackett:9117
+}
+
+plex.{$BASE_DOMAIN} {
+	reverse_proxy https://plex:32400 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}

@@ -1,0 +1,172 @@
+version: "3.9"
+
+services:
+  vpn:
+    image: dperson/openvpn-client
+    restart: unless-stopped
+    cap_add:
+      - net_admin
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    security_opt:
+      - label:disable
+    stdin_open: true
+    tty: true
+    volumes:
+      - /dev/net:/dev/net:z
+      - ${VPN_CONFIG}:/vpn
+
+  filebrowser:
+    image: filebrowser/filebrowser
+    restart: unless-stopped
+    environment:
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+        #command: [ '--noauth', ]
+    volumes:
+      - ${MEDIA_DATA}:/srv
+      - ${FB_CONFIG}:/config
+    expose:
+      - 80
+ 
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    restart: unless-stopped
+    network_mode: "service:vpn"
+    environment:
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+      - WEBUI_PORT=8080
+    volumes:
+      - ${QBT_CONFIG}:/config
+      - ${QBT_DOWNLOADS}:/downloads
+    #ports:
+    #  - 6881:6881/tcp
+    #  - 6881:6881/udp
+    #expose:
+    #  - 8080
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    restart: unless-stopped
+    environment:
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+    volumes:
+      - ${BAZARR_CONFIG}:/config
+      - ${MEDIA_MOVIES}:/movies
+      - ${MEDIA_TV}:/tv
+    expose:
+      - 6767 
+
+  sonarr:
+    #image: lscr.io/linuxserver/sonarr:latest
+    image: ghcr.io/hotio/sonarr:release
+    restart: unless-stopped
+    links:
+      - vpn:qbittorrent
+    environment:
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+    volumes:
+      - ${SONARR_CONFIG}:/config
+      - ${MEDIA_DATA}:/data
+    expose:
+      - 8989 
+
+  radarr:
+    #image: lscr.io/linuxserver/sonarr:latest
+    image: ghcr.io/hotio/radarr:release
+    restart: unless-stopped
+    links:
+      - vpn:qbittorrent
+    environment:
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+    volumes:
+      - ${RADARR_CONFIG}:/config
+      - ${MEDIA_DATA}:/data
+    expose:
+      - 7878 
+
+  jackett:
+    #image: lscr.io/linuxserver/sonarr:latest
+    image: ghcr.io/hotio/jackett:release
+    restart: unless-stopped
+    environment:
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+    volumes:
+      - ${JACKETT_CONFIG}:/config
+    expose:
+      - 9117 
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    environment:
+      - PUID
+      - PGID
+      - VERSION=docker
+      - PLEX_CLAIM #optional
+    volumes:
+      - ${PLEX_CONFIG}:/config
+      - ${MEDIA_TV}:/tv
+      - ${MEDIA_MOVIES}:/movies
+    expose:
+      - 32400 
+    restart: unless-stopped
+
+  caddy:
+    #image: androw/caddy-security:latest
+    image: y0ug/caddy-mods
+    build: ./
+    restart: unless-stopped
+    links:
+      - vpn:qbittorrent
+    environment: 
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - JWT_SHARED_KEY=${JWT_SHARED_KEY}
+      - CF_API_TOKEN=${CF_API_TOKEN}
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - PUID
+      - PGID
+      - UMASK 
+      - TZ
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    ports:
+      - ${PUBLIC_IP}:80:80
+      - ${PUBLIC_IP}:443:443
+      - ${PUBLIC_IP}:443:443/udp
+    volumes:
+      - ${PWD}/Caddyfile:/etc/caddy/Caddyfile
+      - ${MEDIA_DATA}:/data_media
+      - ${CADDY_DATA}:/data
+      - ${CADDY_CONFIG}:/config
+      - ${CADDY_STATIC}:/static
+
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:
+
+networks:
+  default:
+    name: bridge-media
+    external: true
