@@ -130,6 +130,18 @@ services:
       - 32400 
     restart: unless-stopped
 
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    user: ${PUID}:${PGID}
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${JELLYFIN_CONFIG}/config:/config
+      - ${JELLYFIN_CACHE}/cache:/cache
+      - ${MEDIA_DATA}:/media
+    restart: unless-stopped
+
   caddy:
     #image: androw/caddy-security:latest
     image: ghcr.io/y0ug/caddy-mods:main
@@ -149,6 +161,11 @@ services:
       - http_proxy
       - https_proxy
       - no_proxy
+      - BASE_DOMAIN
+      - ACME_KEY_NAME
+      - ACME_SECRET
+      - ACME_SERVER
+      - ACME_ALG
     ports:
       - ${PUBLIC_IP}:80:80
       - ${PUBLIC_IP}:443:443

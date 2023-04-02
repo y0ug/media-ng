@@ -1,5 +1,17 @@
+(local) {
+    tls {
+        propagation_timeout -1
+        dns rfc2136 {
+            key_name {$ACME_KEY_NAME}
+            key_alg {$ACME_ALG}
+            key {$ACME_SECRET}
+            server {$ACME_SERVER}
+        }
+    }
+}
+
 {
-	acme_dns cloudflare {$CF_API_TOKEN}
+	#acme_dns cloudflare {$CF_API_TOKEN}
 
 	order authenticate before respond
 	order authorize before basicauth
@@ -53,15 +65,18 @@
 }
 
 auth.{$BASE_DOMAIN} {
+	import local
 	authenticate with myportal
 }
 
 torrent.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	reverse_proxy qbittorrent:8080
 }
 
 dl.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	file_server {
 		root /data_media/*
@@ -69,34 +84,37 @@ dl.{$BASE_DOMAIN} {
 	}
 }
 file.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	reverse_proxy filebrowser:80
 }
 
 bazarr.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	reverse_proxy bazarr:6767
 }
 
 sonarr.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	reverse_proxy sonarr:8989
 }
 
 radarr.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	reverse_proxy radarr:7878
 }
 
 jackett.{$BASE_DOMAIN} {
+	import local
 	authorize with mypolicy
 	reverse_proxy jackett:9117
 }
 
-plex.{$BASE_DOMAIN} {
-	reverse_proxy https://plex:32400 {
-		transport http {
-			tls_insecure_skip_verify
-		}
-	}
+jellyfin.{$BASE_DOMAIN} {
+	import local
+	reverse_proxy jellyfin:8096
 }
+
