@@ -115,21 +115,6 @@ services:
     expose:
       - 9696 
 
-  plex:
-    image: lscr.io/linuxserver/plex:latest
-    environment:
-      - PUID
-      - PGID
-      - VERSION=docker
-      - PLEX_CLAIM #optional
-    volumes:
-      - ${PLEX_CONFIG}:/config
-      - ${MEDIA_TV}:/tv
-      - ${MEDIA_MOVIES}:/movies
-    expose:
-      - 32400 
-    restart: unless-stopped
-
   jellyfin:
     image: jellyfin/jellyfin
     user: ${PUID}:${PGID}
