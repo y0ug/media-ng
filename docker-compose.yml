@@ -105,6 +105,8 @@ services:
     #image: lscr.io/linuxserver/prowlarr:latest
     image: ghcr.io/hotio/prowlarr:latest
     restart: unless-stopped
+    links:
+      - vpn:qbittorrent
     environment:
       - PUID
       - PGID
@@ -133,19 +135,15 @@ services:
     links:
       - vpn:qbittorrent
     environment: 
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - JWT_SHARED_KEY=${JWT_SHARED_KEY}
-      - CF_API_TOKEN=${CF_API_TOKEN}
-      - BASE_DOMAIN=${BASE_DOMAIN}
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - JWT_SHARED_KEY
+      - CF_API_TOKEN
+      - BASE_DOMAIN
       - PUID
       - PGID
       - UMASK 
       - TZ
-      - http_proxy
-      - https_proxy
-      - no_proxy
-      - BASE_DOMAIN
       - ACME_KEY_NAME
       - ACME_SECRET
       - ACME_SERVER
