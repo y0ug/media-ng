@@ -101,9 +101,9 @@ services:
     expose:
       - 7878 
 
-  jackett:
-    #image: lscr.io/linuxserver/sonarr:latest
-    image: ghcr.io/hotio/jackett:release
+  prowlarr:
+    #image: lscr.io/linuxserver/prowlarr:latest
+    image: ghcr.io/hotio/prowlarr:latest
     restart: unless-stopped
     environment:
       - PUID
@@ -111,9 +111,9 @@ services:
       - UMASK 
       - TZ
     volumes:
-      - ${JACKETT_CONFIG}:/config
+      - ${PROWLARR_CONFIG}:/config
     expose:
-      - 9117 
+      - 9696 
 
   plex:
     image: lscr.io/linuxserver/plex:latest
@@ -132,7 +132,6 @@ services:
 
   jellyfin:
     image: jellyfin/jellyfin
-    container_name: jellyfin
     user: ${PUID}:${PGID}
     devices:
       - /dev/dri:/dev/dri

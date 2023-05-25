@@ -107,10 +107,10 @@ radarr.{$BASE_DOMAIN} {
 	reverse_proxy radarr:7878
 }
 
-jackett.{$BASE_DOMAIN} {
+prowlarr.{$BASE_DOMAIN} {
 	import local
 	authorize with mypolicy
-	reverse_proxy jackett:9117
+	reverse_proxy prowlarr:9696
 }
 
 jellyfin.{$BASE_DOMAIN} {
